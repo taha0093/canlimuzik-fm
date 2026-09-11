@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CanlıMüzik.fm — Canlı Müzik Yayını</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="container">
+    <header>
+      <h1>CanlıMüzik.fm</h1>
+      <p class="muted">Anında canlı yayın — yayın kaynaklarını repo'dan yönetebilirsiniz.</p>
+    </header>
+
+    <main>
+      <div id="playerWrap">
+        <div id="playerPlaceholder">Yayın yükleniyor…</div>
+      </div>
+
+      <div id="meta">
+        <div id="nowPlaying">Now playing: <span id="npText">—</span></div>
+        <div id="controls">
+          <a id="editBtn" class="btn" target="_blank" rel="noopener">Repo'da yayını değiştir</a>
+          <a id="previewHelp" class="muted">Hızlı önizleme: <code>?v=VIDEO_ID</code></a>
+        </div>
+      </div>
+
+      <div id="notes" class="muted">
+        Bu sayfa yalnızca gömme (embed) oynatıcıdır — yayın YouTube/Twitch tarafından sağlanır.
+      </div>
+    </main>
+
+    <footer>
+      <p>Repo: <a href="https://github.com/taha0093/canlimuzik-fm">taha0093/canlimuzik-fm</a> • Tasarım: CanlıMüzik.fm</p>
+    </footer>
+  </div>
+
+  <script>
+    (async () => {
+      const REPO_OWNER = 'taha0093';
+      const REPO_NAME = 'canlimuzik-fm';
+      const params = new URLSearchParams(window.location.search);
+      const overrideId = params.get('v');
+      const overrideProvider = params.get('provider');
+
+      function setStatus(t){ document.getElementById('notes').innerText = t || ''; }
+      function createYouTube(id){
+        const src = `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&rel=0&modestbranding=1`;
+        return `<iframe id="player" src="${src}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      }
+
+      const editBtn = document.getElementById('editBtn');
+      editBtn.href = `https://github.com/${REPO_OWNER}/${REPO_NAME}/edit/main/video.json`;
+
+      let cfg = null;
+      try {
+        const res = await fetch('video.json', { cache: 'no-store' });
+        if (res.ok) cfg = await res.json();
+      } catch(e){
+        cfg = null;
+      }
+
+      let provider = cfg && cfg.provider ? cfg.provider.toLowerCase() : null;
+      let id = cfg && cfg.id ? cfg.id : null;
+
+      if (overrideId) {
+        id = overrideId;
+        if (overrideProvider) provider = overrideProvider.toLowerCase();
+      }
+
+      if (!provider && id) provider = 'youtube';
+
+      const playerWrap = document.getElementById('playerWrap');
+      const npText = document.getElementById('npText');
+
+      if (!provider || !id) {
+        playerWrap.innerHTML = '<div class="empty">Yayın yapılandırılmamış. repo/video.json dosyasını düzenle veya URL parametresi ile önizle.</div>';
+        npText.innerText = '—';
+        setStatus('Yayın yok');
+        return;
+      }
+
+      npText.innerText = `${provider.toUpperCase()} • ${id}`;
+      setStatus(`Provider: ${provider.toUpperCase()} • id: ${id}`);
+
+      if (provider === 'youtube') {
+        playerWrap.innerHTML = createYouTube(id);
+      } else {
+        playerWrap.innerHTML = '<div class="empty">Desteklenmeyen provider</div>';
+        setStatus('Desteklenmeyen provider');
+      }
+    })();
+  </script>
+</body>
+</html>
