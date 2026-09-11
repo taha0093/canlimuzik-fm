@@ -1,1 +1,4 @@
-{ "sağlayıcı": "youtube", "kimlik": "KBcd9YJu0Fg" }
+{
+  "provider": "youtube",
+  "id": "KBcd9YJu0Fg"
+}
